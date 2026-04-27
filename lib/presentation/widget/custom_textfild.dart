@@ -13,9 +13,11 @@ class CustomTextField extends StatefulWidget {
   final InputBorder? border;
   final TextStyle? hintStyle;
   final Color? iconColor;
-  const CustomTextField._({
+  final TextEditingController controller;
+const CustomTextField._({
     required this.label,
     this.hint,
+    required this.controller,
     this.obscureText = false,
     this.icon,
     this.keyboardType = TextInputType.text,
@@ -25,26 +27,26 @@ class CustomTextField extends StatefulWidget {
     this.textColor,
     this.border,
     this.hintStyle,
+    super.key,
     this.iconColor,
-    Key? key,
-  }) : super(key: key);
+  });
 
   /// حقل نص عادي
-  factory CustomTextField.normal({
+factory CustomTextField.normal({
     String? label,
     String? hint,
- 
     TextInputType keyboardType = TextInputType.text,
     Color? color,
     Color? backgroundColor,
     Color? textColor,
     InputBorder? border,
-    TextStyle? hintStyle,
+    TextStyle? hintStyle, 
+    required TextEditingController controller,
   }) {
     return CustomTextField._(
       label: label ?? '',
       hint: hint,
-
+      controller: controller,
       keyboardType: keyboardType,
       color: color,
       backgroundColor: backgroundColor,
@@ -55,7 +57,7 @@ class CustomTextField extends StatefulWidget {
   }
 
   /// حقل نص مع أيقونة
-  factory CustomTextField.withIcon({
+factory CustomTextField.withIcon({
     String? label,
     String? hint,
     required TextEditingController controller,
@@ -70,6 +72,7 @@ class CustomTextField extends StatefulWidget {
     return CustomTextField._(
       label: label ?? '',
       hint: hint,
+      controller: controller,
       icon: icon,
       keyboardType: keyboardType,
       color: color,
@@ -81,7 +84,7 @@ class CustomTextField extends StatefulWidget {
   }
 
   /// حقل كلمة مرور مع إظهار/إخفاء
-  factory CustomTextField.password({
+factory CustomTextField.password({
     required String label,
     String? hint,
     required TextEditingController controller,
@@ -91,6 +94,7 @@ class CustomTextField extends StatefulWidget {
     return CustomTextField._(
       label: label,
       hint: hint,
+      controller: controller,
       obscureText: true,
       icon: Icons.lock,
       color: color,
@@ -105,11 +109,19 @@ class CustomTextField extends StatefulWidget {
 
 class _CustomTextFieldState extends State<CustomTextField> {
   late bool _obscureText;
+  late TextEditingController _controller;
 
   @override
   void initState() {
     super.initState();
     _obscureText = widget.obscureText;
+    _controller = widget.controller;
+  }
+
+  @override
+  void dispose() {
+    // Don't dispose if external controller
+    super.dispose();
   }
 
   @override
@@ -130,12 +142,12 @@ class _CustomTextFieldState extends State<CustomTextField> {
           ),
         if (widget.label.isNotEmpty) const SizedBox(height: 8),
         TextField(
-
+          controller: _controller,
           obscureText: _obscureText,
           keyboardType: widget.keyboardType,
           style: widget.textColor != null ? TextStyle(color: widget.textColor) : null,
           decoration: InputDecoration(
-            hintText: widget.hint, // النص اللي يظهر كمثال
+            hintText: widget.hint,
             hintStyle: widget.hintStyle,
             prefixIcon: widget.icon != null ? Icon(widget.icon, color: fieldColor) : null,
             border: widget.border ?? OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),

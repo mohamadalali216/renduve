@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class CustomButton extends StatelessWidget {
   final String? text;
   final IconData? icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color? color;
   final TextStyle? textStyle;
   final Color? iconColor;
@@ -11,27 +11,26 @@ class CustomButton extends StatelessWidget {
   const CustomButton._({
     this.text,
     this.icon,
-    required this.onPressed,
+    this.onPressed,
     this.color,
     this.textStyle,
     this.iconColor,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   /// زر نص فقط
   factory CustomButton.text({
-    required String text,
-    required VoidCallback onPressed,
-    Color? color,
-    required TextStyle textStyle,
-  }) {
-    return CustomButton._(
+  required String text,
+  VoidCallback? onPressed,
+  Color? color,
+  required TextStyle textStyle,
+}) =>
+    CustomButton._(
       text: text,
       onPressed: onPressed,
       color: color,
       textStyle: textStyle,
     );
-  }
 
   /// زر نص مع أيقونة
   factory CustomButton.textWithIcon({

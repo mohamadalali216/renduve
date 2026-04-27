@@ -12,7 +12,7 @@ class InfoCard extends StatelessWidget {
   final TextStyle labelStyle; // نمط الخط لللايبل
 
   const InfoCard({
-    Key? key,
+    super.key,
     required this.content,
     required this.label,
     this.background = Colors.teal,
@@ -21,7 +21,7 @@ class InfoCard extends StatelessWidget {
     this.height = 100,
     this.labelColor,
     required this.labelStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

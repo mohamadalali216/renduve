@@ -9,14 +9,14 @@ class FlexibleBar extends StatelessWidget implements PreferredSizeWidget {
   final double height;
 
   const FlexibleBar({
-    Key? key,
+    super.key,
     required this.backgroundColor,
     required this.borderRadius,
     required this.leftWidget,
     required this.centerWidget,
     required this.rightWidget,
     this.height = 60,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -6,10 +6,10 @@ class UserProfile extends StatelessWidget {
   final double radius;
 
   const UserProfile({
-    Key? key,
+    super.key,
     required this.name,
     this.radius = 50,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class UserProfile extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: radius,
-          backgroundColor: AppColors.gray_light_2,
+          backgroundColor: AppColors.grayLight2,
           child: Text(
             name.isNotEmpty ? name[0].toUpperCase() : '?',
             style: const TextStyle(
@@ -35,7 +35,7 @@ class UserProfile extends StatelessWidget {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.gray_light_2,
+            color: AppColors.grayLight2,
           ),
         ),
       ],

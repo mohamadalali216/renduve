@@ -9,15 +9,14 @@ class AppTheme {
     scaffoldBackgroundColor: AppColors.gray,
     colorScheme: ColorScheme.light(
       primary: AppColors.primary,
-      secondary: AppColors.gray_light_1,
+      secondary: AppColors.grayLight1,
       error: AppColors.error,
-      background: AppColors.gray,
-      surface: AppColors.gray_light_2,
+      surface: AppColors.grayLight2,
       onPrimary: AppColors.white,
       onSecondary: AppColors.black,
       onError: AppColors.white,
-      onBackground: AppColors.white,
       onSurface: AppColors.black,
+      onBackground: AppColors.white,
     ),
     textTheme: const TextTheme(
       headlineLarge: AppTextStyles.bold_24,
