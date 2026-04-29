@@ -33,3 +33,7 @@ SetPatientEvent(this.patientId  );
 
 class ValidateSelectionEvent extends AppointmentEvent {}
 
+class PreviousDayEvent extends AppointmentEvent {}
+
+class NextDayEvent extends AppointmentEvent {}
+

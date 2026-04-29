@@ -162,7 +162,7 @@ context.read<AppointmentBloc>().add(
     SetPatientEvent(state.patientId),
   );
   _clearFields();
-print("SEND -> doctor: ${widget.doctorId}, patient: ${state.patientId}");
+
   context.read<AppointmentBloc>().add(ValidateSelectionEvent());
 Navigator.pushReplacementNamed(context, AppRoutes.appointmenttake);
 } else if (state is PatientFailure) {
@@ -318,7 +318,7 @@ Navigator.pushReplacementNamed(context, AppRoutes.appointmenttake);
                           ),
                         ),
                         const SizedBox(height: 12),
-                      SizedBox(
+                    /*  SizedBox(
                           width: double.infinity,
                           child: CustomButton.textWithIcon(
                             text: "Add Appointment",
@@ -328,7 +328,7 @@ Navigator.pushReplacementNamed(context, AppRoutes.appointmenttake);
                             textStyle: AppTextStyles.bold_16.copyWith(color: AppColors.white),
                             iconColor: AppColors.white,
                           ),
-                        ),
+                        ),*/
                       ],
                     ),
                 ],

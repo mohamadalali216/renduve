@@ -35,11 +35,14 @@ class AppRouter {
           builder: (_) => const AppointmentScreen(),
         );
 
-      case AppRoutes.appointmentlist:
-        return MaterialPageRoute(
-          builder: (_) => const AppointmentsListScreen(),
-        );
+   case AppRoutes.appointmentlist:
+  final doctorId = settings.arguments as int?;
 
+  return MaterialPageRoute(
+    builder: (_) => AppointmentsListScreen(
+      doctorId: doctorId ! ,
+    ),
+  );
       case AppRoutes.appointmenttake:
   return MaterialPageRoute(
     builder: (_) => const AddAppointmentScreen(),

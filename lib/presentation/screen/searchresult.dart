@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:randevu_app/core/them/app_color.dart';
 import 'package:randevu_app/core/them/app_font.dart';
 import 'package:randevu_app/logic/appointment_bloc/appointment_bloc.dart';
+import 'package:randevu_app/logic/appointment_bloc/appointment_state.dart';
 import 'package:randevu_app/logic/paitent_bloc/paitent_bloc.dart';
 import 'package:randevu_app/logic/paitent_bloc/paitent_state.dart';
 import 'package:randevu_app/presentation/routes/app_router.dart';
@@ -155,18 +156,41 @@ for (var a in allAppointments) {
 
             const SizedBox(height: 12),
 
-            SizedBox(
-              width: double.infinity,
-              child: CustomButton.textWithIcon(
-                text: "New Patient",
-                icon: Icons.add_circle_rounded,
-                 onPressed: () =>  AppRouter.navigateTo(context, AppRoutes.newPaitent),
-                color: AppColors.primary,
-                textStyle: AppTextStyles.bold_16
-                    .copyWith(color: AppColors.white),
-                iconColor: AppColors.white,
-              ),
-            ),
+             BlocBuilder<AppointmentBloc, AppointmentState>(
+  builder: (context, state) {
+    
+    return SizedBox(
+  width: double.infinity,
+  child: CustomButton.textWithIcon(
+    text: "New Patient",
+    icon: Icons.add_circle_rounded,
+    onPressed: () {
+      final bloc = context.read<AppointmentBloc>();
+
+      if (bloc.state.doctorId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("⚠️ Please select a doctor first"),
+          ),
+        );
+        return;
+      }
+
+      AppRouter.navigateTo(
+        context,
+        AppRoutes.newPaitent,
+        arguments: bloc.state.doctorId,
+      );
+    },
+    color: AppColors.primary,
+    textStyle: AppTextStyles.bold_16.copyWith(
+      color: AppColors.white,
+    ),
+    iconColor: AppColors.white,
+  ),
+);
+  },
+),
           ],
         ),
       );

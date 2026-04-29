@@ -29,6 +29,10 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
   Timer? _sessionTimer;
   Duration _sessionDuration = Duration.zero;
 
+  /// Cached last search query and results for restoring after navigation
+  String? _lastSearchQuery;
+  List<PatientModel>? _lastSearchResults;
+
 PatientBloc({
     required this.patientRepository,
 
@@ -49,8 +53,7 @@ PatientBloc({
   
     on<GetPatientAppointmentsEvent>(_onGetPatientAppointments);
     on<GetPatientBasicInfoEvent>(_onGetPatientBasicInfo);
-   
-
+    on<ReloadLastSearchEvent>(_onReloadLastSearch);
   }
 
 
@@ -193,6 +196,9 @@ Future<void> _onAddPatient(
       final patients = await _searchPatientUseCase.execute(query: query);
       print('BLoC: Found ${patients.length} patients for "$query"');
 
+      _lastSearchQuery = query;
+      _lastSearchResults = patients;
+
       if (patients.isEmpty) {
         emit(SearchPatientNoResults('No patients found matching "$query"'));
       } else {
@@ -201,6 +207,28 @@ Future<void> _onAddPatient(
     } catch (e) {
       print('BLoC: Search error for "$query": $e');
       emit(SearchPatientFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onReloadLastSearch(
+    ReloadLastSearchEvent event,
+    Emitter<PatientState> emit,
+  ) async {
+    if (_lastSearchResults != null && _lastSearchResults!.isNotEmpty) {
+      emit(SearchPatientSuccess(_lastSearchResults!));
+    } else if (_lastSearchQuery != null) {
+      emit(SearchPatientLoading());
+      try {
+        final patients = await _searchPatientUseCase.execute(query: _lastSearchQuery!);
+        _lastSearchResults = patients;
+        if (patients.isEmpty) {
+          emit(SearchPatientNoResults('No patients found matching "$_lastSearchQuery"'));
+        } else {
+          emit(SearchPatientSuccess(patients));
+        }
+      } catch (e) {
+        emit(SearchPatientFailure(e.toString()));
+      }
     }
   }
 

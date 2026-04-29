@@ -18,7 +18,9 @@ AppointmentBloc(this.appointmentRepository)
     on<SetDoctorEvent>(_onSetDoctor);
     on<SetPatientEvent>(_onSetPatient);
     on<ValidateSelectionEvent>(_onValidateSelection);
-    
+    on<PreviousDayEvent>(_onPreviousDay);
+    on<NextDayEvent>(_onNextDay);
+
     // 🔍 DEBUG state changes
     @override
     void onChange(Change<AppointmentState> change) {
@@ -71,14 +73,7 @@ AppointmentBloc(this.appointmentRepository)
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
 
-    if (event.doctorId == null || event.patientId == null) {
-      emit(state.copyWith(
-        isLoading: false,
-        error: "Please select doctor and patient",
-      ));
-      return;
-    }
-
+   
     try {
       final appointment = AppointmentModel(
         date: event.date,
@@ -125,6 +120,8 @@ AppointmentBloc(this.appointmentRepository)
         isGetLoading: false,
         appointments: appointments,
         error: null,
+        selectedDate: DateTime.now(),
+        isSuccess: false,
       ));
     } catch (e) {
       emit(state.copyWith(
@@ -153,7 +150,7 @@ AppointmentBloc(this.appointmentRepository)
   void _onValidateSelection(ValidateSelectionEvent event, Emitter<AppointmentState> emit) {
     final isValid = state.doctorId != null && state.patientId != null;
     final validationError = isValid ? null : 'Please select both doctor and patient';
-    
+
     emit(state.copyWith(
       isValid: isValid,
       validationError: validationError,
@@ -161,4 +158,17 @@ AppointmentBloc(this.appointmentRepository)
     print("✅ VALIDATION: isValid=$isValid, error=${validationError ?? 'OK'}");
   }
 
+  void _onPreviousDay(PreviousDayEvent event, Emitter<AppointmentState> emit) {
+    if (state.selectedDate == null) return;
+    emit(state.copyWith(
+      selectedDate: state.selectedDate!.subtract(const Duration(days: 1)),
+    ));
+  }
+
+  void _onNextDay(NextDayEvent event, Emitter<AppointmentState> emit) {
+    if (state.selectedDate == null) return;
+    emit(state.copyWith(
+      selectedDate: state.selectedDate!.add(const Duration(days: 1)),
+    ));
+  }
 }

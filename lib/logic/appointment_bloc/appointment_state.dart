@@ -10,6 +10,7 @@ class AppointmentState {
   final List<AppointmentModel> appointments;
   final bool isValid;
   final String? validationError;
+  final DateTime? selectedDate;
 
   const AppointmentState({
     this.doctorId,
@@ -21,6 +22,7 @@ class AppointmentState {
     this.appointments = const [],
     this.isValid = false,
     this.validationError,
+    this.selectedDate,
   });
 
 AppointmentState copyWith({
@@ -33,6 +35,7 @@ AppointmentState copyWith({
     List<AppointmentModel>? appointments,
     bool? isValid,
     String? validationError,
+    DateTime? selectedDate,
     bool clearError = false,
     bool clearSuccess = false,
   }) {
@@ -46,6 +49,7 @@ AppointmentState copyWith({
       appointments: appointments ?? this.appointments,
       isValid: isValid ?? ((doctorId ?? this.doctorId) != null && (patientId ?? this.patientId) != null),
       validationError: validationError,
+      selectedDate: selectedDate ?? this.selectedDate,
     );
   }
 }

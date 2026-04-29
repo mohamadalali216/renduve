@@ -1,11 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:randevu_app/core/bdf_send/appointment_pdf_service.dart';
 import 'package:randevu_app/core/bdf_send/phone_utils.dart';
 import 'package:randevu_app/core/bdf_send/share_service.dart';
 import 'package:randevu_app/core/them/app_color.dart';
 import 'package:randevu_app/core/them/app_font.dart';
+import 'package:randevu_app/presentation/routes/app_routes.dart';
 import 'package:randevu_app/presentation/widget/custom_button.dart';
 import 'package:randevu_app/presentation/widget/flexible_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,14 +14,8 @@ import 'package:randevu_app/logic/doctor_bloc/doctor_event.dart';
 import 'package:randevu_app/logic/paitent_bloc/paitent_bloc.dart';
 import 'package:randevu_app/logic/paitent_bloc/paitent_state.dart';
 import 'package:randevu_app/logic/paitent_bloc/paitent_event.dart';
-import 'dart:ui' as ui;
-import 'dart:typed_data';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/rendering.dart';
-import 'package:share_plus/share_plus.dart';
-
-import 'package:randevu_app/data/models/paitent_model.dart';
 import 'package:randevu_app/data/models/doctor_model.dart';
+
 class FinishAppointmentScreen extends StatefulWidget {
   final int? doctorId;
   final int? patientId;
@@ -111,7 +104,7 @@ Future<void> _shareAppointmentPdf() async {
 }
   // Generate professional PDF\n  final pdf = pw.Document();\n\n  pdf.addPage(\n    pw.Page(\n      build: (pw.Context ctx) => pw.Padding(\n        padding: const pw.EdgeInsets.all(24),\n        child: pw.Column(\n          crossAxisAlignment: pw.CrossAxisAlignment.center,\n          children: [\n            // Header\n            pw.Container(\n              padding: const pw.EdgeInsets.all(16),\n              decoration: pw.BoxDecoration(\n                color: PdfColor.fromHex('#1E40AF'),\n                borderRadius: pw.BorderRadius.circular(12),\n              ),\n              child: pw.Column(\n                children: [\n                  pw.Text(\n                    '🩺 Randevu Medical Appointment',\n                    style: pw.TextStyle(\n                      fontSize: 24,\n                      fontWeight: pw.FontWeight.bold,\n                      color: PdfColors.white,\n                    ),\n                  ),\n                  pw.SizedBox(height: 4),\n                  pw.Text(\n                    'Confirmation',\n                    style: pw.TextStyle(\n                      fontSize: 16,\n                      color: PdfColors.white70,\n                    ),\n                  ),\n                ],\n              ),\n            ),\n            pw.SizedBox(height: 24),\n\n            // Patient Section\n            pw.Text('Patient Information', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),\n            pw.SizedBox(height: 8),\n            _buildInfoRow('Name', patient.name, pdf),\n            _buildInfoRow('Age', patient.age?.toString() ?? 'N/A', pdf),\n            _buildInfoRow('Gender', patient.gender ?? 'N/A', pdf),\n            _buildInfoRow('Phone', patient.phone ?? 'N/A', pdf),\n            _buildInfoRow('City', patient.city ?? 'N/A', pdf),\n            _buildInfoRow('ID Number', patient.idNumber ?? 'N/A', pdf),\n            pw.SizedBox(height: 20),\n\n            // Doctor Section\n            pw.Text('Doctor Information', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),\n            pw.SizedBox(height: 8),\n            _buildInfoRow('Doctor', doctorName, pdf),\n            _buildInfoRow('Specialty', specialty, pdf),\n            pw.SizedBox(height: 20),\n\n            // Appointment Section\n            pw.Text('Appointment Details', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),\n            pw.SizedBox(height: 8),\n            _buildInfoRow('Date', widget.date, pdf),\n            _buildInfoRow('Time', widget.time, pdf),\n            _buildInfoRow('Notes', widget.notes.isEmpty ? 'None' : widget.notes!, pdf),\n\n            pw.SizedBox(height: 24),\n            // Footer\n            pw.Container(\n              padding: const pw.EdgeInsets.all(12),\n              decoration: pw.BoxDecoration(\n                color: PdfColors.grey300,\n                borderRadius: pw.BorderRadius.circular(8),\n              ),\n              child: pw.Column(\n                children: [\n                  pw.Text('Thank you for choosing Randevu! 📞 Contact us anytime.'),\n                  pw.SizedBox(height: 4),\n                  pw.Text('Generated on ${DateTime.now().toString().substring(0, 16)}', style: pw.TextStyle(fontSize: 10)),\n                ],\n              ),\n            ),\n          ],\n        ),\n      ),\n    ),\n  );
 
-  // 3. Save PDF\n  final dir = await getTemporaryDirectory();\n  final file = File('${dir.path}/randevu_appointment.pdf');\n  await file.writeAsBytes(await pdf.save());\n\n  // 4. Close loading & share\n  if (mounted) Navigator.of(context).pop();\n\n  // Share sheet - user selects WhatsApp\n  await Share.shareXFiles(\n    [XFile(file.path)],\n    text: 'Your medical appointment details from Randevu app',\n    subject: 'Appointment Confirmation',\n  );\n\n  if (mounted) {\n    ScaffoldMessenger.of(context).showSnackBar(\n      const SnackBar(\n        content: Text('PDF shared successfully! Select WhatsApp to send.'),\n        backgroundColor: Colors.green,\n      ),\n    );\n  }\n}\n\n/// PDF helper widget\npw.Widget _buildInfoRow(String label, String value, pw.Document pdf) =>\n  pw.Padding(\n    padding: const pw.EdgeInsets.symmetric(vertical: 4),\n    child: pw.Row(\n      crossAxisAlignment: pw.CrossAxisAlignment.start,\n      children: [\n        pw.SizedBox(\n          width: 120,\n          child: pw.Text(\n            '$label:',\n            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),\n          ),\n        ),\n        pw.Expanded(child: pw.Text(value)),\n      ],\n    ),\n  );\n\n@override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.gray,
@@ -123,7 +116,13 @@ Future<void> _shareAppointmentPdf() async {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new,
               color: AppColors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            // Restore the search results before navigating back
+            context.read<PatientBloc>().add(ReloadLastSearchEvent());
+            // Pop back to SearchResultScreen (remove AddAppointmentScreen + FinishAppointmentScreen)
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+          },
         ),
         title: const Text(
           "Finish Appointment",
@@ -372,6 +371,35 @@ Padding(
   );
 },*/
 
+                color: AppColors.primary,
+                textStyle: AppTextStyles.bold_16
+                    .copyWith(color: AppColors.white),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            /// GO TO APPOINTMENTS LIST
+            SizedBox(
+              width: double.infinity,
+              child: CustomButton.text(
+                text: "Appointments List",
+                onPressed: () {
+                  if (widget.doctorId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("⚠️ No doctor selected"),
+                      ),
+                    );
+                    return;
+                  }
+
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.appointmentlist,
+                    arguments: widget.doctorId,
+                  );
+                },
                 color: AppColors.primary,
                 textStyle: AppTextStyles.bold_16
                     .copyWith(color: AppColors.white),

@@ -163,3 +163,6 @@ class GetPatientBasicInfoEvent extends PatientEvent {
   GetPatientBasicInfoEvent(this.patientId);
 }
 
+/// Event to reload the last search results (used when returning from appointment screens)
+class ReloadLastSearchEvent extends PatientEvent {}
+

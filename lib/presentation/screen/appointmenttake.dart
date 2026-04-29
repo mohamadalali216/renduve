@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:randevu_app/core/them/app_color.dart';
 import 'package:randevu_app/core/them/app_font.dart';
+import 'package:randevu_app/data/models/appointment_model.dart';
 import 'package:randevu_app/logic/appointment_bloc/appointment_bloc.dart';
 import 'package:randevu_app/logic/appointment_bloc/appointment_event.dart';
 import 'package:randevu_app/logic/appointment_bloc/appointment_state.dart';
-import 'package:randevu_app/logic/paitent_bloc/paitent_bloc.dart';
-import 'package:randevu_app/logic/paitent_bloc/paitent_state.dart';
 import 'package:randevu_app/presentation/routes/app_routes.dart';
 import 'package:randevu_app/presentation/widget/custom_button.dart';
 import 'package:randevu_app/presentation/widget/custom_dropdown.dart';
@@ -39,28 +38,37 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     'minute': true,
   };
 
+  bool _hasSetDefaultTime = false;
+
   // ================= LIFECYCLE =================
- @override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  _dayController.addListener(() => _validateField('day', _dayController.text));
-  _monthController.addListener(() => _validateField('month', _monthController.text));
-  _yearController.addListener(() => _validateField('year', _yearController.text));
-  _hourController.addListener(() => _validateField('hour', _hourController.text));
-  _minuteController.addListener(() => _validateField('minute', _minuteController.text));
+    _dayController.addListener(() => _validateField('day', _dayController.text));
+    _monthController.addListener(() => _validateField('month', _monthController.text));
+    _yearController.addListener(() => _validateField('year', _yearController.text));
+    _hourController.addListener(() => _validateField('hour', _hourController.text));
+    _minuteController.addListener(() => _validateField('minute', _minuteController.text));
 
-  _setTodayDate();
+    _setTodayDate();
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    _setDefaultTime(null); // أول تعبئة مباشرة
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final bloc = context.read<AppointmentBloc>();
+      final doctorId = bloc.state.doctorId;
 
-    final patientState = context.read<PatientBloc>().state;
-    if (patientState is PatientAppointmentsLoaded) {
-      _onPatientAppointmentsLoaded(context, patientState);
-    }
-  });
-}
+      if (doctorId != null) {
+        if (bloc.state.appointments.isNotEmpty) {
+          _setDefaultTimeFromAppointments(bloc.state.appointments);
+        } else {
+          bloc.add(GetAppointmentsEvent(doctorId));
+          _setDefaultTime(null);
+        }
+      } else {
+        _setDefaultTime(null);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -189,36 +197,58 @@ void initState() {
   }
 
   void _setDefaultTime(DateTime? lastAppointmentTime, {int addMinutes = 15}) {
-  print("LAST APPOINTMENT: $lastAppointmentTime");
 
-  // إذا ما في موعد سابق → استخدم الوقت الحالي
-  final baseTime = lastAppointmentTime ?? DateTime.now();
 
-  // إضافة الدقائق (افتراضي 15)
-  final newTime = baseTime.add(Duration(minutes: addMinutes));
+    final baseTime = lastAppointmentTime ?? DateTime.now();
+    final newTime = baseTime.add(Duration(minutes: addMinutes));
 
-  int hour24 = newTime.hour;
-  int minute = newTime.minute;
+    int hour24 = newTime.hour;
+    int minute = newTime.minute;
 
-  String amPm = hour24 >= 12 ? 'PM' : 'AM';
+    String amPm = hour24 >= 12 ? 'PM' : 'AM';
 
-  int hour12 = hour24 % 12;
-  if (hour12 == 0) hour12 = 12;
+    int hour12 = hour24 % 12;
+    if (hour12 == 0) hour12 = 12;
 
-  print("SET TIME CALLED");
-  print("NEW BASE TIME: $newTime");
-  print("Hour: $hour12");
-  print("Minute: $minute");
-  print("AM/PM: $amPm");
+    print("SET TIME CALLED");
+    print("NEW BASE TIME: $newTime");
+    print("Hour: $hour12");
+    print("Minute: $minute");
+    print("AM/PM: $amPm");
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  setState(() {
-    _selectedAmPm = amPm;
-    _hourController.text = hour12.toString();
-    _minuteController.text = minute.toString().padLeft(2, '0');
-  });
-}
+    setState(() {
+      _hasSetDefaultTime = true;
+      _selectedAmPm = amPm;
+      _hourController.text = hour12.toString();
+      _minuteController.text = minute.toString().padLeft(2, '0');
+    });
+  }
+
+  void _setDefaultTimeFromAppointments(List<AppointmentModel> appointments) {
+    final doctorId = context.read<AppointmentBloc>().state.doctorId;
+    if (doctorId == null) {
+      _setDefaultTime(null);
+      return;
+    }
+
+    final doctorAppointments = appointments.where((a) {
+      return a.doctorId == doctorId && a.dateTime != null;
+    }).toList();
+
+    doctorAppointments.sort((a, b) => b.dateTime!.compareTo(a.dateTime!));
+
+    if (doctorAppointments.isNotEmpty) {
+      final last = doctorAppointments.first;
+      print("LAST APPOINTMENT FROM BLOC: ${last.dateTime}");
+      _setDefaultTime(last.dateTime!, addMinutes: 15);
+    } else {
+      print("NO APPOINTMENTS FOR THIS DOCTOR");
+      _setDefaultTime(null);
+    }
+  }
+
   // ================= SAVE APPOINTMENT =================
   void _saveAppointment() {
     final bloc = context.read<AppointmentBloc>();
@@ -268,24 +298,30 @@ void initState() {
 
   // ================= BLOC LISTENERS =================
   void _onAppointmentStateChange(BuildContext context, AppointmentState state) {
+    if (!_hasSetDefaultTime && !state.isGetLoading && state.appointments.isNotEmpty) {
+      _setDefaultTimeFromAppointments(state.appointments);
+    }
+
     if (state.isSuccess) {
-      _showSnackBar('Appointment saved successfully!', isSuccess: true);
+      //_showSnackBar('Appointment saved successfully!', isSuccess: true);
 
       final date = _buildDate();
       final time = _buildTime();
-
+final doctorId = state.doctorId;
+final patientId = state.patientId;
       if (date != null && time != null) {
-        Navigator.pushNamed(
-          context,
-          AppRoutes.fAppointment,
-          arguments: {
-            'doctorId': state.doctorId,
-            'patientId': state.patientId,
-            'date': date,
-            'time': time,
-            'notes': _notesController.text.trim(),
-          },
-        );
+       
+Navigator.pushNamed(
+  context,
+  AppRoutes.fAppointment,
+  arguments: {
+    'doctorId': doctorId,
+    'patientId': patientId,
+    'date': date,
+    'time': time,
+    'notes': _notesController.text.trim(),
+  },
+);
       }
     }
 
@@ -294,130 +330,77 @@ void initState() {
     }
   }
 
-void _onPatientAppointmentsLoaded(
-  BuildContext context,
-  PatientAppointmentsLoaded pState,
-) {
-  final doctorId = context.read<AppointmentBloc>().state.doctorId;
-
-  print("DOCTOR ID: $doctorId");
-  print("Appointments Count: ${pState.appointments.length}");
-
-  if (doctorId == null) {
-    _setDefaultTime(null);
-    return;
-  }
-
-  final doctorAppointments = pState.appointments.where((a) {
-    print(
-      "appt doctorId=${a.doctorId} patientId=${a.patientId} dateTime=${a.dateTime}",
-    );
-
-    return a.doctorId == doctorId && a.dateTime != null;
-  }).toList();
-
-  doctorAppointments.sort(
-    (a, b) => b.dateTime!.compareTo(a.dateTime!),
-  );
-
-  if (doctorAppointments.isNotEmpty) {
-    final last = doctorAppointments.first;
-
-    print("LAST APPOINTMENT: ${last.dateTime}");
-
-    _setDefaultTime(
-      last.dateTime!,
-      addMinutes: 15,
-    );
-  } else {
-    print("NO APPOINTMENTS FOR THIS DOCTOR");
-    _setDefaultTime(null);
-  }
-}
-
   // ================= BUILD =================
   @override
   Widget build(BuildContext context) {
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<PatientBloc, PatientState>(
-          listenWhen: (prev, curr) => curr is PatientAppointmentsLoaded,
-          listener: (context, pState) {
-            if (pState is PatientAppointmentsLoaded) {
-              _onPatientAppointmentsLoaded(context, pState);
-            }
-          },
-        ),
-      ],
-      child: BlocConsumer<AppointmentBloc, AppointmentState>(
-        listener: _onAppointmentStateChange,
-        builder: (context, state) {
-          final isLoading = state.isLoading;
-          final canSave = state.isValid && _isFormReady() && !isLoading;
+    return BlocConsumer<AppointmentBloc, AppointmentState>(
+      listener: _onAppointmentStateChange,
+      builder: (context, state) {
+        final isLoading = state.isLoading;
+        final canSave = state.isValid && _isFormReady() && !isLoading;
 
-          return Scaffold(
-            backgroundColor: AppColors.gray,
+        return Scaffold(
+          backgroundColor: AppColors.gray,
 
-            /// ================= APP BAR =================
-            appBar: AppBar(
-              backgroundColor: AppColors.primary,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
-                onPressed: () => Navigator.pop(context),
+          /// ================= APP BAR =================
+          appBar: AppBar(
+            backgroundColor: AppColors.primary,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: const Text(
+              'Appointment',
+              style: TextStyle(color: AppColors.white, fontSize: 18),
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.notifications_active_outlined, color: AppColors.white),
+                onPressed: () {},
               ),
-              title: const Text(
-                'Appointment',
-                style: TextStyle(color: AppColors.white, fontSize: 18),
-              ),
-              centerTitle: true,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_active_outlined, color: AppColors.white),
-                  onPressed: () {},
-                ),
+            ],
+          ),
+
+          /// ================= BOTTOM BAR =================
+          bottomNavigationBar: FlexibleBar(
+            backgroundColor: AppColors.primary,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(25),
+              bottomRight: Radius.circular(25),
+            ),
+            leftWidget: IconButton(
+              icon: const Icon(Icons.group, color: AppColors.white),
+              onPressed: () {},
+            ),
+            centerWidget: const SizedBox(),
+            rightWidget: IconButton(
+              icon: const Icon(Icons.menu, color: AppColors.white),
+              onPressed: () {},
+            ),
+            height: 70,
+          ),
+
+          /// ================= BODY =================
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDateSection(),
+                const SizedBox(height: 30),
+                _buildTimeSection(),
+                const SizedBox(height: 30),
+                _buildNotesSection(),
+                const SizedBox(height: 30),
+                _buildSaveButton(state, canSave, isLoading),
+                const SizedBox(height: 10),
               ],
             ),
-
-            /// ================= BOTTOM BAR =================
-            bottomNavigationBar: FlexibleBar(
-              backgroundColor: AppColors.primary,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(25),
-                bottomRight: Radius.circular(25),
-              ),
-              leftWidget: IconButton(
-                icon: const Icon(Icons.group, color: AppColors.white),
-                onPressed: () {},
-              ),
-              centerWidget: const SizedBox(),
-              rightWidget: IconButton(
-                icon: const Icon(Icons.menu, color: AppColors.white),
-                onPressed: () {},
-              ),
-              height: 70,
-            ),
-
-            /// ================= BODY =================
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildDateSection(),
-                  const SizedBox(height: 30),
-                  _buildTimeSection(),
-                  const SizedBox(height: 30),
-                  _buildNotesSection(),
-                  const SizedBox(height: 30),
-                  _buildSaveButton(state, canSave, isLoading),
-                  const SizedBox(height: 10),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -621,4 +604,3 @@ void _onPatientAppointmentsLoaded(
     );
   }
 }
-

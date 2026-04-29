@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:randevu_app/core/them/app_color.dart';
 import 'package:randevu_app/core/them/app_font.dart';
@@ -57,7 +60,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+       return WillPopScope(
+     onWillPop: () async {
+  exit(0); // 🔥 هذا يغلق التطبيق فعليًا بدون أي مشاكل
+},
+    child:  Scaffold(
        backgroundColor: AppColors.gray,
        appBar: AppBar(
         
@@ -163,7 +170,7 @@ BlocBuilder<AppointmentBloc, AppointmentState>(
               context.read<AppointmentBloc>().add(
                 SetDoctorEvent(doctor.id!),
               );
-              print("🎯 DOCTOR SELECTED & DISPATCHED: ${doctor.id}");
+           
               setState(() {
                 selectedDoctor = doctor.name;
                 doctorSelected = true;
@@ -311,7 +318,45 @@ BlocBuilder<AppointmentBloc, AppointmentState>(
   ),
 );
   },
-)
+),
+    const SizedBox(height: 10),
+                    BlocBuilder<AppointmentBloc, AppointmentState>(
+  builder: (context, state) {
+    
+    return SizedBox(
+  width: double.infinity,
+  child: CustomButton.text(
+    text: "appointment list ",
+  
+    onPressed: () {
+      final bloc = context.read<AppointmentBloc>();
+
+      if (bloc.state.doctorId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("⚠️ Please select a doctor first"),
+          ),
+        );
+        return;
+      }
+
+       Navigator.pushNamed(
+      context,
+      AppRoutes.appointmentlist,
+      arguments: bloc.state.doctorId,
+      );
+    },
+    color: AppColors.primary,
+    textStyle: AppTextStyles.bold_16.copyWith(
+      color: AppColors.white,
+    ),
+ 
+  ),
+);
+  },
+),
+             
+             
               ],
             ),
              
@@ -319,5 +364,5 @@ BlocBuilder<AppointmentBloc, AppointmentState>(
         
   ) 
     
-    ));
+    )));
   }}
