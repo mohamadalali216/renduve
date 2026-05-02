@@ -149,10 +149,21 @@ bool _validateAllFields() {
     );
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     return BlocConsumer<PatientBloc, PatientState>(
+        // ✅ P0.1 FIX: Add listenWhen to prevent multiple triggers
+        listenWhen: (prev, curr) {
+          // Only trigger when PatientSuccess is NEW - prevents state replay issues
+          if (prev is PatientSuccess && curr is PatientSuccess) {
+            return prev.patientId != curr.patientId;
+          }
+          return prev.runtimeType != curr.runtimeType;
+        },
         listener: (context, state) {
+          // ✅ Add mounted check for safety
+          if (!mounted) return;
+
         if (state is PatientSuccess) {
   _showSnackBar("Patient saved successfully!", isSuccess: true);
 context.read<AppointmentBloc>().add(

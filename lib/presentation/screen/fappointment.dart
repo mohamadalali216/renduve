@@ -5,7 +5,6 @@ import 'package:randevu_app/core/bdf_send/share_service.dart';
 import 'package:randevu_app/core/them/app_color.dart';
 import 'package:randevu_app/core/them/app_font.dart';
 import 'package:randevu_app/presentation/routes/app_routes.dart';
-import 'package:randevu_app/presentation/screen/appointmentlist.dart';
 import 'package:randevu_app/presentation/widget/custom_button.dart';
 import 'package:randevu_app/presentation/widget/flexible_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -393,35 +392,40 @@ Padding(
 
             const SizedBox(height: 10),
 
-            /// GO TO APPOINTMENTS LIST
-         SizedBox(
-  width: double.infinity,
-  child: CustomButton.text(
-    text: "Appointments List",
-    onPressed: () {
-      print('🔥 FAPPOINTMENT: Button clicked, doctorId = ${widget.doctorId}');
-      
-      if (widget.doctorId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("⚠️ No doctor selected")),
-        );
-        return;
-      }
+/// GO TO APPOINTMENTS LIST
+  SizedBox(
+    width: double.infinity,
+    child: CustomButton.text(
+      text: "Appointments List",
+      onPressed: () async {
+        print('🔥 FAPPOINTMENT: Button clicked, doctorId = ${widget.doctorId}');
 
-      // ✅ استخدم named route لكن مع تأخير
-      Future.delayed(const Duration(milliseconds: 300), () {
+        if (widget.doctorId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("⚠️ No doctor selected")),
+          );
+          return;
+        }
+
+        // ✅ Senior Fix: Use async/await for proper flow control
+        // Only return true when user actually completes the flow
         if (!mounted) return;
-        Navigator.pushNamed(
+
+        await Navigator.pushNamed(
           context,
           AppRoutes.appointmentlist,
           arguments: widget.doctorId,
         );
-      });
-    },
-    color: AppColors.primary,
-    textStyle: AppTextStyles.bold_16.copyWith(color: AppColors.white),
+
+        // ✅ Only consider completed when user returns from list
+        // This ensures real flow completion, not fake success
+        if (!mounted) return;
+        Navigator.pop(context, true);
+      },
+      color: AppColors.primary,
+      textStyle: AppTextStyles.bold_16.copyWith(color: AppColors.white),
+    ),
   ),
-),
             const SizedBox(height: 10),
           ],
         ),
@@ -494,5 +498,5 @@ Padding(
       ],
     );
 }
-//كرت الموعد  
+
 

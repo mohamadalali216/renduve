@@ -40,10 +40,11 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
   bool _hasSetDefaultTime = false;
 
-  // ================= LIFECYCLE =================
+// ================= LIFECYCLE =================
   @override
   void initState() {
     super.initState();
+    _hasSetDefaultTime = false; // P0.3: Reset flag on screen re-entry
 
     _dayController.addListener(() => _validateField('day', _dayController.text));
     _monthController.addListener(() => _validateField('month', _monthController.text));
@@ -70,7 +71,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     });
   }
 
-  @override
+@override
   void dispose() {
     _dayController.dispose();
     _monthController.dispose();
@@ -80,6 +81,10 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     _notesController.dispose();
     super.dispose();
   }
+
+// P0.3: Senior Fix - Flag reset is only in initState()
+  // deactivate() is NOT used because it fires on rebuilds
+  // The flag controls default time logic, not cleanup
 
   // ================= HELPERS =================
   int? _parseIntSafely(String value) => int.tryParse(value.trim());
@@ -277,7 +282,7 @@ print("jjjjjjjjjjjjjjjjjjjjjjjjj$newTime");
       return;
     }
 
-    bloc.add(
+bloc.add(
       AddAppointmentEvent(
         date: date,
         time: time,
@@ -300,23 +305,22 @@ print("jjjjjjjjjjjjjjjjjjjjjjjjj$newTime");
 
 // ================= BLOC LISTENERS =================
   void _onAppointmentStateChange(BuildContext context, AppointmentState state) {
+    // P1.1 FIX: mounted check for safety
+    if (!mounted) return;
+
     // Only process appointments loading when screen is current
     if (!_hasSetDefaultTime && !state.isGetLoading && state.appointments.isNotEmpty) {
       _setDefaultTimeFromAppointments(state.appointments);
     }
 
-    // ✅ FIX: Only navigate when this screen is the current top screen
-    // This prevents old screens in the stack from triggering navigation
+// P0.1: Only navigate when this screen is the current top screen
     if (state.isSuccess && ModalRoute.of(context)?.isCurrent == true) {
-      //_showSnackBar('Appointment saved successfully!', isSuccess: true);
-
       final date = _buildDate();
       final time = _buildTime();
       final doctorId = state.doctorId;
       final patientId = state.patientId;
       if (date != null && time != null) {
-       
-        Navigator.pushNamed(
+Navigator.pushNamed(
           context,
           AppRoutes.fAppointment,
           arguments: {
@@ -326,7 +330,14 @@ print("jjjjjjjjjjjjjjjjjjjjjjjjj$newTime");
             'time': time,
             'notes': _notesController.text.trim(),
           },
-        );
+).then((result) {
+          // ✅ Senior Fix: Logic-based reset, not lifecycle-based
+          // This ensures flag resets on flow completion, not on rebuilds
+          if (mounted && result == true) {
+            _hasSetDefaultTime = false;
+            context.read<AppointmentBloc>().add(ClearAppointmentFieldsEvent());
+          }
+        });
       }
     }
 
@@ -339,9 +350,8 @@ print("jjjjjjjjjjjjjjjjjjjjjjjjj$newTime");
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AppointmentBloc, AppointmentState>(
-      // ✅ FIX: Only trigger listener when isSuccess actually changes to true
-      // This prevents stale state from causing unwanted navigation
-      listenWhen: (prev, curr) => prev.isSuccess != curr.isSuccess && curr.isSuccess,
+      // P0.2: Only trigger when isSuccess changes to true (not stale state replay)
+      listenWhen: (prev, curr) => !prev.isSuccess && curr.isSuccess,
       listener: _onAppointmentStateChange,
       builder: (context, state) {
         final isLoading = state.isLoading;

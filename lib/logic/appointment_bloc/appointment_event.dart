@@ -16,6 +16,10 @@ class AddAppointmentEvent extends AppointmentEvent {
   });
 }
 
+/// Event to clear the created appointment event after navigation is complete
+/// This prevents state replay when returning to the screen
+class ClearAppointmentCreatedEvent extends AppointmentEvent {}
+
 class ClearAppointmentFieldsEvent extends AppointmentEvent {}
 
 class GetAppointmentsEvent extends AppointmentEvent {
