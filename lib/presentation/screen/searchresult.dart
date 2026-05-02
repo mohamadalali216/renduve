@@ -119,11 +119,6 @@ final allAppointments = appointmentState.appointments;
   final patientAppointments = allAppointments.where((a) {
     return a.patientId.toString() == patient.id.toString();
   }).toList();
-print("Patient ID: ${patient.id}");
-print("Appointments Count: ${allAppointments.length}");
-for (var a in allAppointments) {
-  print("Appt patientId=${a.patientId} date=${a.date}");
-}
   patientAppointments.sort((a, b) {
     return b.date.compareTo(a.date);
   });

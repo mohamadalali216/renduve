@@ -36,4 +36,9 @@ class ValidateSelectionEvent extends AppointmentEvent {}
 class PreviousDayEvent extends AppointmentEvent {}
 
 class NextDayEvent extends AppointmentEvent {}
+class DeleteAppointmentEvent extends AppointmentEvent {
+  final int appointmentId;
+  
+  DeleteAppointmentEvent(this.appointmentId);
+}
 

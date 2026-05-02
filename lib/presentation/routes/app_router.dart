@@ -38,10 +38,16 @@ class AppRouter {
    case AppRoutes.appointmentlist:
   final doctorId = settings.arguments as int?;
 
+  if (doctorId == null) {
+    return MaterialPageRoute(
+      builder: (_) => const Scaffold(
+        body: Center(child: Text("No doctor selected")),
+      ),
+    );
+  }
+
   return MaterialPageRoute(
-    builder: (_) => AppointmentsListScreen(
-      doctorId: doctorId ! ,
-    ),
+    builder: (_) => AppointmentsListScreen(doctorId: doctorId),
   );
       case AppRoutes.appointmenttake:
   return MaterialPageRoute(

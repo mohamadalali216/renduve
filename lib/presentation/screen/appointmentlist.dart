@@ -7,7 +7,29 @@ import 'package:randevu_app/logic/appointment_bloc/appointment_event.dart';
 import 'package:randevu_app/logic/appointment_bloc/appointment_state.dart';
 import 'package:randevu_app/presentation/widget/appointment_item.dart';
 import 'package:randevu_app/presentation/widget/flexible_bar.dart';
+Color _getAppointmentStatusColor(String appointmentDate, {String? status}) {
+  // إذا تم حذف الموعد
+  if (status?.toLowerCase() == 'cancelled' || 
+      status?.toLowerCase() == 'deleted') {
+    return AppColors.error; // أحمر
+  }
 
+  // التحقق من تاريخ الموعد
+  final parsedDate = DateTime.tryParse(appointmentDate);
+  if (parsedDate == null) {
+    return AppColors.primary; // أخضر افتراضي
+  }
+
+  final now = DateTime.now();
+  
+  // إذا كان الموعد في الماضي
+  if (parsedDate.isBefore(now)) {
+    return AppColors.grayLight1; // رمادي - موعد مضى
+  }
+  
+  // إذا كان الموعد في المستقبل
+  return AppColors.primary; // أخضر - موعد قادم
+}
 class AppointmentsListScreen extends StatefulWidget {
   final int doctorId;
 
@@ -24,10 +46,19 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<AppointmentBloc>().add(
-          GetAppointmentsEvent(widget.doctorId),
-        );
+    print('🔥 LISTSCREEN initState: doctorId=${widget.doctorId}');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      print('🔥 LISTSCREEN post-frame dispatch');
+      try {
+        context.read<AppointmentBloc>().add(GetAppointmentsEvent(widget.doctorId));
+        print('🔥 LISTSCREEN: event dispatched');
+      } catch (e) {
+        print('🔥 LISTSCREEN ERROR: $e');
+      }
+    });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -137,11 +168,13 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
                       ? allAppointments
                       : allAppointments.where((item) {
                           try {
-                            final itemDate = DateTime.parse(item.date);
+                            print('🔥 Filtering item date: ${item.date}');
+                            final itemDate = DateTime.tryParse(item.date) ?? DateTime.now();
                             return itemDate.year == selectedDate.year &&
                                 itemDate.month == selectedDate.month &&
                                 itemDate.day == selectedDate.day;
-                          } catch (_) {
+                          } catch (e) {
+                            print('🔥 Date parse error: $e for ${item.date}');
                             return false;
                           }
                         }).toList();
@@ -166,21 +199,40 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
                     );
                   }
 
-                  return ListView.separated(
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 3),
-                    itemBuilder: (context, index) {
-                      final item = filtered[index];
-                      return AppointmentItemWidget(
-                        time: item.time,
-                        name: item.patientName ?? "Unknown",
-                        id: item.patientId.toString(),
-                        lastDate: item.date,
-                        status: AppointmentStatus.done,
-                      );
-                    },
-                  );
-                },
+         return ListView.separated(
+  itemCount: filtered.length,
+  separatorBuilder: (_, __) => const SizedBox(height: 3),
+  itemBuilder: (context, index) {
+    final item = filtered[index];
+    
+    return AppointmentItemWidget(
+      time: item.time,
+      name: item.patientName ?? "Unknown",
+      id: item.patientId.toString(),
+      lastDate: item.date,
+      status: AppointmentStatus.done,
+      appointmentId: item.id ?? 0, // ✅ أضفه ?? 0
+      statusColor: _getAppointmentStatusColor(
+        item.date,
+        status: item.status,
+      ),
+      onDelete: () {
+        // تأكد من أن ID موجود قبل الحذف
+        if (item.id != null) {
+          context.read<AppointmentBloc>().add(
+            DeleteAppointmentEvent(item.id!),
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تم حذف الموعد'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      },
+    );
+  },
+);            },
               ),
             ),
 

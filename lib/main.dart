@@ -29,6 +29,33 @@ void main() {
   runApp(const MyApp());
 }
 
+// ✅ Navigator Observer لتتبع الـ navigation
+class _MyNavigatorObserver extends NavigatorObserver {
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    print('🔥 NAVIGATOR: PUSH - Current: ${route.settings.name}');
+    super.didPush(route, previousRoute);
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    print('🔥 NAVIGATOR: POP - Removed: ${route.settings.name}, Back to: ${previousRoute?.settings.name}');
+    super.didPop(route, previousRoute);
+  }
+
+  @override
+  void didRemove(Route route, Route? previousRoute) {
+    print('🔥 NAVIGATOR: REMOVE - Removed: ${route.settings.name}');
+    super.didRemove(route, previousRoute);
+  }
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    print('🔥 NAVIGATOR: REPLACE - Old: ${oldRoute?.settings.name}, New: ${newRoute?.settings.name}');
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+  }
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -51,7 +78,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
 
-        /// 🔥 NEW DOCTOR REPOSITORY
+        /// 🔥 DOCTOR REPOSITORY
         RepositoryProvider<DoctorRepository>(
           create: (context) => DoctorRepository(
             localDataSource: DoctorLocalDataSource(),
@@ -77,7 +104,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
 
-          /// 🔥 NEW DOCTOR BLOC
+          /// 🔥 DOCTOR BLOC
           BlocProvider<DoctorBloc>(
             create: (context) => DoctorBloc(
               context.read<DoctorRepository>(),
@@ -97,6 +124,10 @@ class MyApp extends StatelessWidget {
               theme: state.themeData,
               initialRoute: AppRoutes.appointmentapp,
               onGenerateRoute: AppRouter.generateRoute,
+              // ✅ أضفنا Navigator Observer
+              navigatorObservers: [
+                _MyNavigatorObserver(),
+              ],
             );
           },
         ),

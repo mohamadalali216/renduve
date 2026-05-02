@@ -5,6 +5,7 @@ import 'package:randevu_app/core/bdf_send/share_service.dart';
 import 'package:randevu_app/core/them/app_color.dart';
 import 'package:randevu_app/core/them/app_font.dart';
 import 'package:randevu_app/presentation/routes/app_routes.dart';
+import 'package:randevu_app/presentation/screen/appointmentlist.dart';
 import 'package:randevu_app/presentation/widget/custom_button.dart';
 import 'package:randevu_app/presentation/widget/flexible_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -40,17 +41,30 @@ class _FinishAppointmentScreenState extends State<FinishAppointmentScreen> {
 
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.doctorId != null) {
-        context.read<DoctorBloc>().add(LoadDoctorsEvent());
-      }
-      if (widget.patientId != null) {
-        context.read<PatientBloc>().add(GetPatientBasicInfoEvent(widget.patientId!));
-      }
-    });
-  }//دالة فتح محادثة واتس اب 
+void initState() {
+  super.initState();
+  print('🔥 FAPPOINTMENT: initState');
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (widget.doctorId != null) {
+      context.read<DoctorBloc>().add(LoadDoctorsEvent());
+    }
+    if (widget.patientId != null) {
+      context.read<PatientBloc>().add(GetPatientBasicInfoEvent(widget.patientId!));
+    }
+  });
+}
+
+@override
+void deactivate() {
+  print('🔥 FAPPOINTMENT: deactivate() - صفحة تُحذف من الـ tree');
+  super.deactivate();
+}
+
+@override
+void dispose() {
+  print('🔥 FAPPOINTMENT: dispose() - صفحة تُغلق');
+  super.dispose();
+}//دالة فتح محادثة واتس اب 
 Future<void> _shareAppointmentPdf() async {
   // Show loading
   if (!mounted) return;
@@ -380,32 +394,34 @@ Padding(
             const SizedBox(height: 10),
 
             /// GO TO APPOINTMENTS LIST
-            SizedBox(
-              width: double.infinity,
-              child: CustomButton.text(
-                text: "Appointments List",
-                onPressed: () {
-                  if (widget.doctorId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("⚠️ No doctor selected"),
-                      ),
-                    );
-                    return;
-                  }
+         SizedBox(
+  width: double.infinity,
+  child: CustomButton.text(
+    text: "Appointments List",
+    onPressed: () {
+      print('🔥 FAPPOINTMENT: Button clicked, doctorId = ${widget.doctorId}');
+      
+      if (widget.doctorId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("⚠️ No doctor selected")),
+        );
+        return;
+      }
 
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.appointmentlist,
-                    arguments: widget.doctorId,
-                  );
-                },
-                color: AppColors.primary,
-                textStyle: AppTextStyles.bold_16
-                    .copyWith(color: AppColors.white),
-              ),
-            ),
-
+      // ✅ استخدم named route لكن مع تأخير
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (!mounted) return;
+        Navigator.pushNamed(
+          context,
+          AppRoutes.appointmentlist,
+          arguments: widget.doctorId,
+        );
+      });
+    },
+    color: AppColors.primary,
+    textStyle: AppTextStyles.bold_16.copyWith(color: AppColors.white),
+  ),
+),
             const SizedBox(height: 10),
           ],
         ),

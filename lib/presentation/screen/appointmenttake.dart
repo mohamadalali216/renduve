@@ -201,7 +201,9 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
     final baseTime = lastAppointmentTime ?? DateTime.now();
     final newTime = baseTime.add(Duration(minutes: addMinutes));
-
+print("jjjjjjjjjjjjjjjjjjjjjjjjj$lastAppointmentTime");
+print("jjjjjjjjjjjjjjjjjjjjjjjjj$baseTime");
+print("jjjjjjjjjjjjjjjjjjjjjjjjj$newTime");
     int hour24 = newTime.hour;
     int minute = newTime.minute;
 
@@ -296,32 +298,35 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     );
   }
 
-  // ================= BLOC LISTENERS =================
+// ================= BLOC LISTENERS =================
   void _onAppointmentStateChange(BuildContext context, AppointmentState state) {
+    // Only process appointments loading when screen is current
     if (!_hasSetDefaultTime && !state.isGetLoading && state.appointments.isNotEmpty) {
       _setDefaultTimeFromAppointments(state.appointments);
     }
 
-    if (state.isSuccess) {
+    // ✅ FIX: Only navigate when this screen is the current top screen
+    // This prevents old screens in the stack from triggering navigation
+    if (state.isSuccess && ModalRoute.of(context)?.isCurrent == true) {
       //_showSnackBar('Appointment saved successfully!', isSuccess: true);
 
       final date = _buildDate();
       final time = _buildTime();
-final doctorId = state.doctorId;
-final patientId = state.patientId;
+      final doctorId = state.doctorId;
+      final patientId = state.patientId;
       if (date != null && time != null) {
        
-Navigator.pushNamed(
-  context,
-  AppRoutes.fAppointment,
-  arguments: {
-    'doctorId': doctorId,
-    'patientId': patientId,
-    'date': date,
-    'time': time,
-    'notes': _notesController.text.trim(),
-  },
-);
+        Navigator.pushNamed(
+          context,
+          AppRoutes.fAppointment,
+          arguments: {
+            'doctorId': doctorId,
+            'patientId': patientId,
+            'date': date,
+            'time': time,
+            'notes': _notesController.text.trim(),
+          },
+        );
       }
     }
 
@@ -330,10 +335,13 @@ Navigator.pushNamed(
     }
   }
 
-  // ================= BUILD =================
+// ================= BUILD =================
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AppointmentBloc, AppointmentState>(
+      // ✅ FIX: Only trigger listener when isSuccess actually changes to true
+      // This prevents stale state from causing unwanted navigation
+      listenWhen: (prev, curr) => prev.isSuccess != curr.isSuccess && curr.isSuccess,
       listener: _onAppointmentStateChange,
       builder: (context, state) {
         final isLoading = state.isLoading;

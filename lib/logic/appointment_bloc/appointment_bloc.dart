@@ -20,15 +20,15 @@ AppointmentBloc(this.appointmentRepository)
     on<ValidateSelectionEvent>(_onValidateSelection);
     on<PreviousDayEvent>(_onPreviousDay);
     on<NextDayEvent>(_onNextDay);
+     on<DeleteAppointmentEvent>(_onDeleteAppointment); 
 
     // 🔍 DEBUG state changes
     @override
     void onChange(Change<AppointmentState> change) {
       super.onChange(change);
-      print("📊 BLOC CHANGE: doctorId=${change.nextState.doctorId} patientId=${change.nextState.patientId} isValid=${change.nextState.isValid}");
+      print("📊 APPOINTMENT BLOC: loading=${change.nextState.isGetLoading} error=${change.nextState.error} count=${change.nextState.appointments.length}");
     }
-  }
-
+      }
   /// Set selected doctor ID, preserve patient ID
   void _onSetDoctor(SetDoctorEvent event, Emitter<AppointmentState> emit) {
     if (event.doctorId < 1) {
@@ -171,4 +171,23 @@ AppointmentBloc(this.appointmentRepository)
       selectedDate: state.selectedDate!.add(const Duration(days: 1)),
     ));
   }
+Future<void> _onDeleteAppointment(
+    DeleteAppointmentEvent event,
+    Emitter<AppointmentState> emit,
+  ) async {
+    try {
+      // حدّث القائمة محلياً بدون API
+      final updatedAppointments = state.appointments.map((apt) {
+        if (apt.id == event.appointmentId) {
+          return apt.copyWith(status: 'cancelled'); // تحول للأحمر
+        }
+        return apt;
+      }).toList();
+
+      emit(state.copyWith(appointments: updatedAppointments));
+    } catch (e) {
+      emit(state.copyWith(error: 'خطأ: $e'));
+    }
+  }
 }
+
